@@ -161,8 +161,20 @@ class TaskResultManager(ResultManager):
             'task_kwargs': task_kwargs,
             'worker': worker
         }
-        obj, created = self.using(using).get_or_create(task_id=task_id,
-                                                       defaults=fields)
+
+        obj, created = None, None
+        try:
+            obj, created = self.using(using).get_or_create(task_id=task_id,
+                                                           defaults=fields)
+        except:
+            from django.db import close_old_connections
+            close_old_connections()
+            try:
+                obj, created = self.using(using).get_or_create(task_id=task_id,
+                                                               defaults=fields)
+            except:
+                pass
+
         if not created:
             for k, v in fields.items():
                 setattr(obj, k, v)
